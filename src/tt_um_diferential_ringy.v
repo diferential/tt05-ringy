@@ -188,10 +188,10 @@ module tt_um_diferential_ringy (
 				1: fast_regs[0] <= fast_regs[ir_reg];
 				2: fast_regs[0] <= {fast_regs[0][2:0], ir_imm};
 				3: fast_regs[0] <= fast_regs[0] + fast_regs[1];
-				4: fast_regs[0] <= fast_regs[0] + ir[4:0];
-				5: fast_regs[0] <= fast_regs[0] << ir_imm;
-				6: if (fast_regs[0] == 0) fast_cnt <= fast_cnt + 2;
-				7: fast_cnt <= ir_imm;
+				4: fast_regs[0] <= fast_regs[0] + ir_imm;
+				5: if (fast_regs[0] == 0) fast_cnt <= fast_cnt + 2;
+				6: fast_cnt <= ir_imm;
+				7: fast_regs[0] <= uio_in;
 			endcase
 		end
 	end
