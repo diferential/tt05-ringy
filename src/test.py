@@ -20,9 +20,49 @@ async def test_ringosc_cnt(dut):
     dut.clk.value = 0;
     dut.uio_in.value = 0;
 
-
     await Timer(1, units="ns")
     dut._log.info("Counter: " + str(dut.uio_oe.value));
+
+    dut.clk.value = 1;
+    await Timer(1, units="ns")
+    dut.clk.value = 0;
+    await Timer(1, units="ns")
+
+    # out of reset
+    dut.rst_n.value = 1;
+    await Timer(1, units="ns")
+    dut.clk.value = 1;
+    await Timer(1, units="ns")
+    dut.clk.value = 0;
+    await Timer(1, units="ns")
+    dut.clk.value = 1;
+    await Timer(1, units="ns")
+    dut.clk.value = 0;
+    await Timer(1, units="ns")
+
+    dut.ui_in.value = 0b100;
+    dut.clk.value = 1;
+    await Timer(1, units="ns")
+    dut.clk.value = 0;
+    await Timer(1, units="ns")
+
+    # start fast clk but in reset
+    dut.ui_in.value = 0b100101;
+    dut.clk.value = 1;
+    await Timer(1, units="ns")
+    dut.clk.value = 0;
+    await Timer(1, units="ns")
+
+    await Timer(10, units="ns")
+
+    # clear fast_reset
+    dut.ui_in.value = 0b000101;
+    dut.clk.value = 1;
+    await Timer(1, units="ns")
+    dut.clk.value = 0;
+    await Timer(1, units="ns")
+
+    await Timer(50, units="ns")
 
     assert str(dut.uio_oe.value) == "00000000";
     assert dut.uio_out.value == 0;

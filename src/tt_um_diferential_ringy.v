@@ -89,7 +89,7 @@ module tt_um_diferential_ringy (
 			
 
 		`ifdef SIM
-			assign #0.1 osc[i] = !y;
+			assign #0.01 osc[i] = !y;
 		`else
 			sky130_fd_sc_hd__inv_2 divrp_bit_I (
 				.A     (y),
@@ -143,17 +143,60 @@ module tt_um_diferential_ringy (
 		endcase                                                                                                       
 	end 
 
-	reg [7:0] fast_cnt;
+	reg [1:0] fast_rst_ff;
 	always @(posedge fast_clk) begin
-		if (~rst_n_i)
+		fast_rst_ff[0] <= clk_cfg[3];
+		fast_rst_ff[1] <= fast_rst_ff[0];
+	end
+	wire fast_rst;
+	assign fast_rst = fast_rst_ff[1];
+
+	reg [7:0] fast_cnt;
+	reg [7:0] fast_regs [7:0];
+	reg [7:0] fast_mem [31:0];
+
+	wire [7:0] ir;
+	wire [2:0] ir_op;
+	wire [2:0] ir_reg;
+	wire [4:0] ir_imm;
+
+	assign ir = fast_mem[fast_cnt];
+	assign ir_op = ir[7:5];
+	assign ir_reg = ir[2:0];
+	assign ir_imm = ir[4:0];
+
+	always @(posedge fast_clk) begin
+		if (fast_rst)
+		begin
 			fast_cnt <= 0;
+			fast_regs[0] <= 0;
+			fast_regs[1] <= 0;
+			fast_regs[2] <= 0;
+			fast_regs[3] <= 0;
+			fast_regs[4] <= 0;
+			fast_regs[5] <= 0;
+			fast_regs[6] <= 0;
+			fast_regs[7] <= 0;
+
+			fast_mem[ui_in[4:0]] <= uio_in;
+		end
 		else
 		begin
 			fast_cnt <= fast_cnt + 1;
+			case(ir[7:5])
+				0: fast_regs[ir_reg] <= fast_regs[0];
+				1: fast_regs[0] <= fast_regs[ir_reg] <= fast_regs[0];
+				2: fast_regs[0] <= {fast_regs[0][3:0], ir_imm};
+				3: fast_regs[ir_reg] <= fast_regs[0];
+				4: fast_regs[0] <= fast_regs[0] + ir[4:0];
+				5: fast_regs[0] <= fast_regs[0] << ir_imm;
+				6: if (fast_regs[0] == 0) fast_cnt <= fast_cnt + 2;
+				7: fast_cnt <= ir_imm;
+			endcase
 		end
 	end
 
-	assign uo_out  = ui_in[0] ? fast_cnt[7:0] : uio_in;
+	assign uo_out  = ui_in[0] ? fast_cnt[7:0] : fast_regs[7];
 	assign uio_out = ui_in[0] ? fast_cnt : 8'h00;
 	assign uio_oe  = ui_in[0] ? 8'hff : 8'h00;
 
